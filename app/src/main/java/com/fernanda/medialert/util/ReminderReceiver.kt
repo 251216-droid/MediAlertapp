@@ -19,6 +19,7 @@ class ReminderReceiver : BroadcastReceiver() {
         val idProg = intent.getIntExtra("ID_PROGRAMACION", -1)
         val nombre = intent.getStringExtra("NOMBRE_MEDICAMENTO") ?: "Medicamento"
         val dosis  = intent.getStringExtra("DOSIS") ?: ""
+        val fechaProgramadaDt = intent.getStringExtra("FECHA_PROGRAMADA_DT")
 
         Log.d(TAG, "onReceive → action=$action idProg=$idProg nombre=$nombre")
 
@@ -30,7 +31,7 @@ class ReminderReceiver : BroadcastReceiver() {
             "ACTION_TOMADO" -> {
                 Log.d(TAG, "✅ TOMADO: prog=$idProg")
                 cancelarNotificacion(context, idProg)
-                registrarEnServidor(context, idProg, nombre, "Tomado")
+                registrarEnServidor(context, idProg, nombre, fechaProgramadaDt, "Tomado")
             }
 
             // ── POSPONER ──────────────────────────────────────────────────────
@@ -39,14 +40,20 @@ class ReminderReceiver : BroadcastReceiver() {
             "ACTION_POSPONER" -> {
                 Log.d(TAG, "⏰ POSPONER: prog=$idProg")
                 cancelarNotificacion(context, idProg)
-                registrarEnServidor(context, idProg, nombre, "Pospuesto")
+                registrarEnServidor(context, idProg, nombre, fechaProgramadaDt, "Pospuesto")
             }
 
             else -> Log.w(TAG, "Acción no reconocida: $action")
         }
     }
 
-    private fun registrarEnServidor(context: Context, idProg: Int, nombre: String, estado: String) {
+    private fun registrarEnServidor(
+        context: Context,
+        idProg: Int,
+        nombre: String,
+        fechaProgramadaDt: String?,
+        estado: String
+    ) {
         if (idProg == -1) {
             Log.e(TAG, "idProg inválido, no se puede registrar")
             return
@@ -57,7 +64,7 @@ class ReminderReceiver : BroadcastReceiver() {
                 app.historialRepository.registrarToma(
                     idProg,
                     "",
-                    null,
+                    fechaProgramadaDt,
                     estado
                 )
                 Log.d(TAG, "✅ Historial guardado: estado=$estado prog=$idProg")

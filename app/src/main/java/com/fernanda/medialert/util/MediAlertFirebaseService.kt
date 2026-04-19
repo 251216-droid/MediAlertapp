@@ -44,6 +44,7 @@ class MediAlertFirebaseService : FirebaseMessagingService() {
         val idProgramacion = data["idProgramacion"]?.toIntOrNull() ?: -1
         val nombre         = data["nombre"] ?: "Medicamento"
         val dosis          = data["dosis"] ?: ""
+        val fechaProgramadaDt = data["fecha_programada_dt"] ?: ""
 
         if (idProgramacion == -1) {
             Log.w(TAG, "idProgramacion inválido, ignorando mensaje")
@@ -51,11 +52,11 @@ class MediAlertFirebaseService : FirebaseMessagingService() {
         }
 
         Log.d(TAG, "Mostrando notificación: idProg=$idProgramacion nombre=$nombre")
-        mostrarNotificacion(idProgramacion, nombre, dosis)
+        mostrarNotificacion(idProgramacion, nombre, dosis, fechaProgramadaDt)
     }
 
 
-    private fun mostrarNotificacion(idProgramacion: Int, nombre: String, dosis: String) {
+    private fun mostrarNotificacion(idProgramacion: Int, nombre: String, dosis: String, fechaProgramadaDt: String) {
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         // Crear canal de alta importancia
@@ -93,6 +94,7 @@ class MediAlertFirebaseService : FirebaseMessagingService() {
             putExtra("ID_PROGRAMACION",   idProgramacion)
             putExtra("NOMBRE_MEDICAMENTO", nombre)
             putExtra("DOSIS",              dosis)
+            putExtra("FECHA_PROGRAMADA_DT", fechaProgramadaDt)
             addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES)
         }
         val pTomado = PendingIntent.getBroadcast(
@@ -111,6 +113,7 @@ class MediAlertFirebaseService : FirebaseMessagingService() {
             putExtra("ID_PROGRAMACION",   idProgramacion)
             putExtra("NOMBRE_MEDICAMENTO", nombre)
             putExtra("DOSIS",              dosis)
+            putExtra("FECHA_PROGRAMADA_DT", fechaProgramadaDt)
             addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES)
         }
         val pPosponer = PendingIntent.getBroadcast(

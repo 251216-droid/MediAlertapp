@@ -1,30 +1,45 @@
 package com.fernanda.medialert.data.repositories
 
+import android.util.Log
 import com.fernanda.medialert.data.local.dao.UsuarioDao
 import com.fernanda.medialert.data.local.entity.Usuario
+import com.fernanda.medialert.data.remote.ActualizarPerfilRequest
 import com.fernanda.medialert.data.remote.AuthApiService
+import com.fernanda.medialert.data.remote.FcmTokenRequest
 import com.fernanda.medialert.data.remote.LoginRequest
 import com.fernanda.medialert.data.remote.RegistroRequest
-import com.fernanda.medialert.data.remote.ActualizarPerfilRequest
-import com.fernanda.medialert.data.remote.FcmTokenRequest
 
 class UsuarioRepository(
     private val usuarioDao: UsuarioDao,
     private val apiService: AuthApiService
 ) {
+    companion object {
+        private const val TAG = "UsuarioRepository"
+    }
+
     suspend fun registrarUsuario(usuario: Usuario): Int {
         try {
             val request = RegistroRequest(usuario.nombre, usuario.correo, usuario.password)
             val response = apiService.registrarUsuario(request)
-            
+
             if (response.isSuccessful && response.body()?.idUsuario != null) {
                 val body = response.body()!!
                 val realId = body.idUsuario!!
-                val usuarioConIdReal = Usuario(realId, body.nombre ?: usuario.nombre, body.correo ?: usuario.correo, usuario.password)
+                val usuarioConIdReal = Usuario(
+                    realId,
+                    body.nombre ?: usuario.nombre,
+                    body.correo ?: usuario.correo,
+                    usuario.password
+                )
                 usuarioDao.insertarUsuario(usuarioConIdReal)
                 return realId
             }
-        } catch (e: Exception) { e.printStackTrace() }
+
+            Log.e(TAG, "Registro fallido. code=${response.code()} error=${response.errorBody()?.string()}")
+        } catch (e: Exception) {
+            Log.e(TAG, "Excepcion registrando usuario", e)
+        }
+
         return -1
     }
 
@@ -35,14 +50,19 @@ class UsuarioRepository(
                 val body = response.body()!!
                 val usuario = Usuario(
                     idUsuario = body.idUsuario!!,
-                    nombre = body.nombre ?: "Usuario", 
+                    nombre = body.nombre ?: "Usuario",
                     correo = body.correo ?: correo,
                     password = password
                 )
                 usuarioDao.insertarUsuario(usuario)
                 return usuario
             }
-        } catch (e: Exception) { e.printStackTrace() }
+
+            Log.e(TAG, "Login fallido. code=${response.code()} error=${response.errorBody()?.string()}")
+        } catch (e: Exception) {
+            Log.e(TAG, "Excepcion iniciando sesion", e)
+        }
+
         return usuarioDao.iniciarSesion(correo, password)
     }
 
@@ -51,28 +71,34 @@ class UsuarioRepository(
             val request = ActualizarPerfilRequest(nombre, correo, password)
             val response = apiService.actualizarPerfil(idUsuario, request)
             if (response.isSuccessful) {
-                // Actualizar en Room también
                 val usuarioActual = usuarioDao.obtenerPorId(idUsuario)
                 if (usuarioActual != null) {
                     val pass = if (password.isNotEmpty()) password else usuarioActual.password
-                    usuarioDao.insertarUsuario(usuarioActual.copy(nombre = nombre, correo = correo, password = pass))
+                    usuarioDao.insertarUsuario(
+                        usuarioActual.copy(nombre = nombre, correo = correo, password = pass)
+                    )
                 }
                 true
-            } else false
+            } else {
+                Log.e(TAG, "Actualizar perfil fallido. code=${response.code()} error=${response.errorBody()?.string()}")
+                false
+            }
         } catch (e: Exception) {
+            Log.e(TAG, "Excepcion actualizando perfil", e)
             false
         }
     }
 
-    // ── FCM: Enviar token al servidor para recibir notificaciones push ────────
     suspend fun actualizarFcmToken(idUsuario: Int, token: String): Boolean {
         return try {
             val response = apiService.actualizarFcmToken(idUsuario, FcmTokenRequest(token))
+            if (!response.isSuccessful) {
+                Log.e(TAG, "Actualizar FCM fallido. code=${response.code()} error=${response.errorBody()?.string()}")
+            }
             response.isSuccessful
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Excepcion actualizando token FCM", e)
             false
         }
     }
 }
-

@@ -16,6 +16,7 @@ android {
         targetSdk = 36
         versionCode = 7
         versionName = "1.7.0"
+        buildConfigField("String", "API_BASE_URL", "\"https://medialert1-production.up.railway.app/\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -42,6 +43,7 @@ android {
         jvmTarget = "11"
     }
     buildFeatures {
+        buildConfig = true
         compose = true
     }
 }

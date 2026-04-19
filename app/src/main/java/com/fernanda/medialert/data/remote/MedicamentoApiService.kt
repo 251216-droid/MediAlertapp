@@ -1,9 +1,11 @@
 package com.fernanda.medialert.data.remote
 
+import androidx.annotation.Keep
 import com.google.gson.annotations.SerializedName
 import retrofit2.Response
 import retrofit2.http.*
 
+@Keep
 interface MedicamentoApiService {
 
     @POST("api/medicamentos/agregar")
@@ -25,15 +27,17 @@ interface MedicamentoApiService {
     suspend fun agregarProgramacion(@Body request: ProgramacionRequest): Response<Void>
 }
 
+@Keep
 data class MedicamentoRequest(
-    val idUsuario: Int,
-    val nombre_medicamento: String,
-    val tipo_presentacion: String,
-    val dosis: String,
-    val categoria: String,
-    val estado_medicamento: String
+    @SerializedName("idUsuario") val idUsuario: Int,
+    @SerializedName("nombre_medicamento") val nombre_medicamento: String,
+    @SerializedName("tipo_presentacion") val tipo_presentacion: String,
+    @SerializedName("dosis") val dosis: String,
+    @SerializedName("categoria") val categoria: String,
+    @SerializedName("estado_medicamento") val estado_medicamento: String
 )
 
+@Keep
 data class MedicamentoResponse(
     @SerializedName("idMedicamento") val idMedicamento: Int,
     @SerializedName("id_usuario_fk") val id_usuario_fk: Int,
@@ -48,18 +52,20 @@ data class MedicamentoResponse(
     @SerializedName("frecuencia_horas") val frecuencia_horas: Int? = null
 )
 
+@Keep
 data class ProgramacionRequest(
-    val id_medicamento_fk: Int,
-    val hora_primera_toma: String,
-    val frecuencia_horas: Int,
-    val dias_semana: String,
-    val duracion_dias: Int = 0
+    @SerializedName("id_medicamento_fk") val id_medicamento_fk: Int,
+    @SerializedName("hora_primera_toma") val hora_primera_toma: String,
+    @SerializedName("frecuencia_horas") val frecuencia_horas: Int,
+    @SerializedName("dias_semana") val dias_semana: String,
+    @SerializedName("duracion_dias") val duracion_dias: Int = 0
 )
 
+@Keep
 data class ProgramacionUpdateRequest(
-    val hora_primera_toma: String,
-    val frecuencia_horas: Int,
-    val dias_semana: String = "Todos",
-    val duracion_dias: Int = 0
+    @SerializedName("hora_primera_toma") val hora_primera_toma: String,
+    @SerializedName("frecuencia_horas") val frecuencia_horas: Int,
+    @SerializedName("dias_semana") val dias_semana: String = "Todos",
+    @SerializedName("duracion_dias") val duracion_dias: Int = 0
 )
 

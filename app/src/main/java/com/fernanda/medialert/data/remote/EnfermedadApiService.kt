@@ -1,8 +1,10 @@
 package com.fernanda.medialert.data.remote
 
+import androidx.annotation.Keep
 import retrofit2.Response
 import retrofit2.http.*
 
+@Keep
 interface EnfermedadApiService {
 
     @POST("api/enfermedades/agregar")

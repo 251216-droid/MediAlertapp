@@ -1,19 +1,25 @@
 package com.fernanda.medialert.data.remote
 
+import com.fernanda.medialert.BuildConfig
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
+
 object RetrofitClient {
 
-    //private const val BASE_URL = "http://192.168.0.27:3000/"
-    private const val BASE_URL = "https://medialert1-production.up.railway.app/"
+    private const val DEFAULT_BASE_URL = "https://medialert1-production.up.railway.app/"
+    private val baseUrl = BuildConfig.API_BASE_URL.ifBlank { DEFAULT_BASE_URL }
 
     val instance: Retrofit by lazy {
 
         val logging = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
+            level = if (BuildConfig.DEBUG) {
+                HttpLoggingInterceptor.Level.BODY
+            } else {
+                HttpLoggingInterceptor.Level.NONE
+            }
         }
 
         val client = OkHttpClient.Builder()
@@ -23,7 +29,7 @@ object RetrofitClient {
             .build()
 
         Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(baseUrl)
             .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()

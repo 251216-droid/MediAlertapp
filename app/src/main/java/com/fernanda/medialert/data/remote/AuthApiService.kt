@@ -1,11 +1,14 @@
 package com.fernanda.medialert.data.remote
 
+import androidx.annotation.Keep
+import com.google.gson.annotations.SerializedName
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
 
+@Keep
 interface AuthApiService {
 
     @POST("api/auth/registro")
@@ -21,13 +24,15 @@ interface AuthApiService {
     suspend fun actualizarFcmToken(@Path("id") id: Int, @Body request: FcmTokenRequest): Response<AuthResponse>
 }
 
+@Keep
 data class ActualizarPerfilRequest(
-    val nombre_completo: String,
-    val correo: String,
-    val password: String = ""
+    @SerializedName("nombre_completo") val nombre_completo: String,
+    @SerializedName("correo") val correo: String,
+    @SerializedName("password") val password: String = ""
 )
 
+@Keep
 data class FcmTokenRequest(
-    val fcm_token: String
+    @SerializedName("fcm_token") val fcm_token: String
 )
 

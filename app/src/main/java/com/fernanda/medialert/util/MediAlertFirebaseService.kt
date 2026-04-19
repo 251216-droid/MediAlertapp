@@ -1,5 +1,6 @@
 package com.fernanda.medialert.util
 
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -36,32 +37,42 @@ class MediAlertFirebaseService : FirebaseMessagingService() {
         super.onMessageReceived(message)
         Log.d(TAG, "=== FCM RECIBIDO ===")
         Log.d("FCM_MSG", "message: $message")
-
         Log.d(TAG, "from: ${message.from}")
         Log.d(TAG, "data: ${message.data}")
 
-        val data           = message.data
+        val data = message.data
         val idProgramacion = data["idProgramacion"]?.toIntOrNull() ?: -1
-        val nombre         = data["nombre"] ?: "Medicamento"
-        val dosis          = data["dosis"] ?: ""
+        val nombre = data["nombre"] ?: "Medicamento"
+        val dosis = data["dosis"] ?: ""
         val fechaProgramadaDt = data["fecha_programada_dt"] ?: ""
+        val notificationId = if (fechaProgramadaDt.isNotBlank()) {
+            "${idProgramacion}_${fechaProgramadaDt}".hashCode()
+        } else {
+            idProgramacion
+        }
 
         if (idProgramacion == -1) {
-            Log.w(TAG, "idProgramacion inválido, ignorando mensaje")
+            Log.w(TAG, "idProgramacion invalido, ignorando mensaje")
             return
         }
 
-        Log.d(TAG, "Mostrando notificación: idProg=$idProgramacion nombre=$nombre")
-        mostrarNotificacion(idProgramacion, nombre, dosis, fechaProgramadaDt)
+        Log.d(
+            TAG,
+            "Mostrando notificacion: idProg=$idProgramacion notificationId=$notificationId nombre=$nombre"
+        )
+        mostrarNotificacion(idProgramacion, notificationId, nombre, dosis, fechaProgramadaDt)
     }
 
-
-    private fun mostrarNotificacion(idProgramacion: Int, nombre: String, dosis: String, fechaProgramadaDt: String) {
+    private fun mostrarNotificacion(
+        idProgramacion: Int,
+        notificationId: Int,
+        nombre: String,
+        dosis: String,
+        fechaProgramadaDt: String
+    ) {
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        // Crear canal de alta importancia
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // Eliminar canal viejo si existe (para aplicar nueva configuración)
             val canalExistente = nm.getNotificationChannel(CHANNEL_ID)
             if (canalExistente == null) {
                 val canal = NotificationChannel(
@@ -78,47 +89,49 @@ class MediAlertFirebaseService : FirebaseMessagingService() {
                     setSound(soundUri, audioAttr)
                     enableVibration(true)
                     vibrationPattern = longArrayOf(0, 300, 200, 300)
-                    lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
+                    lockscreenVisibility = Notification.VISIBILITY_PUBLIC
                 }
                 nm.createNotificationChannel(canal)
-                Log.d(TAG, "Canal de notificación creado")
+                Log.d(TAG, "Canal de notificacion creado")
             }
         }
 
         val intentTomado = Intent().apply {
-            action    = "ACTION_TOMADO"
+            action = "ACTION_TOMADO"
             component = ComponentName(
                 packageName,
                 "com.fernanda.medialert.util.ReminderReceiver"
             )
-            putExtra("ID_PROGRAMACION",   idProgramacion)
+            putExtra("ID_PROGRAMACION", idProgramacion)
+            putExtra("NOTIFICATION_ID", notificationId)
             putExtra("NOMBRE_MEDICAMENTO", nombre)
-            putExtra("DOSIS",              dosis)
+            putExtra("DOSIS", dosis)
             putExtra("FECHA_PROGRAMADA_DT", fechaProgramadaDt)
             addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES)
         }
         val pTomado = PendingIntent.getBroadcast(
             this,
-            idProgramacion + 1000,
+            notificationId + 1000,
             intentTomado,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         val intentPosponer = Intent().apply {
-            action    = "ACTION_POSPONER"
+            action = "ACTION_POSPONER"
             component = ComponentName(
                 packageName,
                 "com.fernanda.medialert.util.ReminderReceiver"
             )
-            putExtra("ID_PROGRAMACION",   idProgramacion)
+            putExtra("ID_PROGRAMACION", idProgramacion)
+            putExtra("NOTIFICATION_ID", notificationId)
             putExtra("NOMBRE_MEDICAMENTO", nombre)
-            putExtra("DOSIS",              dosis)
+            putExtra("DOSIS", dosis)
             putExtra("FECHA_PROGRAMADA_DT", fechaProgramadaDt)
             addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES)
         }
         val pPosponer = PendingIntent.getBroadcast(
             this,
-            idProgramacion + 2000,
+            notificationId + 2000,
             intentPosponer,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -127,35 +140,34 @@ class MediAlertFirebaseService : FirebaseMessagingService() {
 
         val notificacion = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.logo_medialert)
-            .setContentTitle(" ¡Hora de tu medicina!")
+            .setContentTitle("Hora de tu medicina")
             .setContentText("$nombre · $dosis")
             .setStyle(
                 NotificationCompat.BigTextStyle()
                     .bigText("Es hora de tomar:\n$nombre\nDosis: $dosis")
             )
-            .setPriority(NotificationCompat.PRIORITY_MAX)   // MAX para asegurar visibilidad
-            .setCategory(NotificationCompat.CATEGORY_ALARM) // Categoría ALARM pasa Doze mode
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC) // Visible en pantalla bloqueada
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setSound(soundUri)
             .setVibrate(longArrayOf(0, 300, 200, 300))
-            .addAction(R.drawable.exitoso,    " TOMADO",   pTomado)
-            .addAction(R.drawable.no_exitoso, " POSPONER", pPosponer)
+            .addAction(R.drawable.exitoso, "TOMADO", pTomado)
+            .addAction(R.drawable.no_exitoso, "POSPONER", pPosponer)
             .setAutoCancel(false)
             .setOngoing(false)
             .build()
 
-        nm.notify(idProgramacion, notificacion)
-        Log.d(TAG, "Notificación mostrada con ID=$idProgramacion")
+        nm.notify(notificationId, notificacion)
+        Log.d(TAG, "Notificacion mostrada con notificationId=$notificationId prog=$idProgramacion")
     }
 
-    // ── Guardar token en la API ───────────────────────────────────────────────
     private fun enviarTokenAlServidor(token: String) {
-        val prefs     = getSharedPreferences("medialert_prefs", Context.MODE_PRIVATE)
+        val prefs = getSharedPreferences("medialert_prefs", Context.MODE_PRIVATE)
         val idUsuario = prefs.getInt("idUsuario", -1)
 
         if (idUsuario == -1) {
             prefs.edit().putString("fcm_token_pendiente", token).apply()
-            Log.d(TAG, "Token guardado localmente (sin sesión activa)")
+            Log.d(TAG, "Token guardado localmente (sin sesion activa)")
             return
         }
 

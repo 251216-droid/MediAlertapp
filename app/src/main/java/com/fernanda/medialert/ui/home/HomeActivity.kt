@@ -274,7 +274,11 @@ fun HomeScreen(
                                 Button(
                                     onClick = {
                                         viewModel.registrarTomaManual(
-                                            p.idProgramacion, horaDisplay, "Tomado", idUsuario
+                                            p.idProgramacion,
+                                            horaDisplay,
+                                            p.proxima_toma_fecha,
+                                            "Tomado",
+                                            idUsuario
                                         )
                                     },
                                     modifier = Modifier.weight(1f).height(46.dp),
@@ -291,7 +295,11 @@ fun HomeScreen(
                                 Button(
                                     onClick = {
                                         viewModel.registrarTomaManual(
-                                            p.idProgramacion, horaDisplay, "No Tomado", idUsuario
+                                            p.idProgramacion,
+                                            horaDisplay,
+                                            p.proxima_toma_fecha,
+                                            "No Tomado",
+                                            idUsuario
                                         )
                                     },
                                     modifier = Modifier.weight(1f).height(46.dp),

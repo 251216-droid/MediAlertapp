@@ -54,7 +54,12 @@ class ReminderReceiver : BroadcastReceiver() {
         val app = context.applicationContext as MediAlertApp
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                app.historialRepository.registrarToma(idProg, nombre, estado)
+                app.historialRepository.registrarToma(
+                    idProg,
+                    "",
+                    null,
+                    estado
+                )
                 Log.d(TAG, "✅ Historial guardado: estado=$estado prog=$idProg")
             } catch (e: Exception) {
                 Log.e(TAG, "❌ Error guardando historial: ${e.message}")

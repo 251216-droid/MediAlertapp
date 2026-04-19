@@ -48,6 +48,7 @@ class HomeViewModel(
     fun registrarTomaManual(
         idProgramacion: Int,
         horaProgramada: String,
+        fechaProgramadaDt: String?,
         estado: String,
         idUsuario: Int
     ) {
@@ -59,7 +60,12 @@ class HomeViewModel(
                 }
             }
             // Guardar en MySQL
-            val exito = repository.registrarToma(idProgramacion, horaProgramada, estado)
+            val exito = repository.registrarToma(
+                idProgramacion,
+                horaProgramada,
+                fechaProgramadaDt,
+                estado
+            )
             // Recargar para mostrar la siguiente toma calculada por la API
             if (exito) actualizarDatos(idUsuario)
         }

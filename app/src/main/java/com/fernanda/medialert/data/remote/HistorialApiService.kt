@@ -36,6 +36,7 @@ data class ProximaDosisResponse(
     @SerializedName("hora_primera_toma") val hora_primera_toma: String,
     @SerializedName("frecuencia_horas") val frecuencia_horas: Int,
     @SerializedName("proxima_toma") val proxima_toma: String = "",
+    @SerializedName("proxima_toma_fecha") val proxima_toma_fecha: String = "",
     @SerializedName("proxima_toma_timestamp") val proxima_toma_timestamp: Long = 0L
 )
 
@@ -43,6 +44,7 @@ data class ProximaDosisResponse(
 data class TomaRequest(
     @SerializedName("id_programacion_fk") val id_programacion_fk: Int,
     @SerializedName("fecha_hora_programada") val fecha_hora_programada: String,
+    @SerializedName("fecha_programada_dt") val fecha_programada_dt: String? = null,
     @SerializedName("estado") val estado: String
 )
 

@@ -25,9 +25,19 @@ class HistorialRepository(private val apiService: HistorialApiService) {
         }
     }
 
-    suspend fun registrarToma(idProgramacion: Int, fechaProgramada: String, estado: String): Boolean {
+    suspend fun registrarToma(
+        idProgramacion: Int,
+        fechaProgramada: String,
+        fechaProgramadaDt: String?,
+        estado: String
+    ): Boolean {
         return try {
-            val request = TomaRequest(id_programacion_fk = idProgramacion, fecha_hora_programada = fechaProgramada, estado = estado)
+            val request = TomaRequest(
+                id_programacion_fk = idProgramacion,
+                fecha_hora_programada = fechaProgramada,
+                fecha_programada_dt = fechaProgramadaDt,
+                estado = estado
+            )
             val response = apiService.registrarToma(request)
             response.isSuccessful
         } catch (e: Exception) {
